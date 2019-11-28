@@ -1,31 +1,40 @@
 var express = require('express');
 var router = express.Router()
 var con = require('./connection.js')
-
+var bcrypt = require('bcrypt')
 router.post('/',(req,res)=> {
     userobj = {
          "name" : req.body.name,
          "username":req.body.username,
          "email"  : req.body.email,
          "profile" : req.body.profile,
-         "passwd" : req.body.passwd
     
     }
-    console.log("userobj"+userobj);
+        const saltRounds = 10;
+        const myPlaintextPassword = req.body.passwd;
+        const someOtherPlaintextPassword = 'not_bacon';
+        bcrypt.genSalt(saltRounds, function(err, salt) {
+            bcrypt.hash(myPlaintextPassword, salt, function(err, hash) {
+                // Store hash in your password DB.
 
-    let name = req.body.name;
-    let username = req.body.username;
-    let email = req.body.email;
-    let profile = req.body.profile;
-    let passwd = req.body.passwd;
+              //  to check password is correct
+              bcrypt.compare(myPlaintextPassword, hash, function(err, res) {
+                // res == true
+                console.log("pass res"+res)
+            });
+                userobj.passwd = hash;
+                con.connect(function(){
+                    let sql = "insert into users SET ?"
+                    con.query(sql,[userobj], function(err, result){
+                        if(err) throw err;
+                        res.send(result);
+                    })
+                })
+            });
+        });
+        console.log("userobj"+userobj);
 
-    con.connect(function(){
-        let sql = "insert into users SET ?"
-        con.query(sql,[userobj], function(err, result){
-            if(err) throw err;
-            res.send(result);
-        })
-    })
+  
 })
 
 router.patch('/',(req,res)=> {
@@ -43,8 +52,8 @@ router.patch('/',(req,res)=> {
 
 
     con.connect(function(){
-        let sql = "update users SET ?"
-        con.query(sql,[userobj], function(err, result){
+        let sql = "update users SET ? where id= ?"
+        con.query(sql,[userobj, id], function(err, result){
             if(err) throw err;
             res.send(result);
         })
@@ -54,6 +63,16 @@ router.get('/',(req,res) => {
     con.connect(function(){
         let sql = "select * from users"
         con.query(sql, function(err, result){
+            if(err) throw err;
+            res.send(result);
+        })
+    })
+})
+router.get('/getone',(req, res)=>{
+    let id =  req.query.id;
+    con.connect(function(){
+        let sql =  "select * from users where id = '"+id+"'"
+        con.query(sql, (err, result)=> {
             if(err) throw err;
             res.send(result);
         })

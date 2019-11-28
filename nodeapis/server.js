@@ -1,10 +1,12 @@
 var express = require('express')
 var mysql = require('mysql')
 var bodyparser = require('body-parser')
+var cors = require('cors')
 var userRoute = require('./routes/user.js')
 var con = require('./routes/connection.js')
 var app = express()
 app.use(bodyparser.json())
+app.use(cors())
 app.use(bodyparser.urlencoded({extended: true}))
 
 app.use('/userroute',userRoute);
@@ -76,7 +78,7 @@ app.get('/', (req,res) => {
                 })
             })
             })
-            
+             
             app.get('/selectone', (req,res)=>{
 
                 let id = req.query.id;
