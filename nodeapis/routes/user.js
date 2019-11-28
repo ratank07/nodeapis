@@ -2,6 +2,9 @@ var express = require('express');
 var router = express.Router()
 var con = require('./connection.js')
 var bcrypt = require('bcrypt')
+var jwt = require('jsonwebtoken')
+var config = require('../config')
+
 router.post('/',(req,res)=> {
     userobj = {
          "name" : req.body.name,
@@ -33,9 +36,45 @@ router.post('/',(req,res)=> {
             });
         });
         console.log("userobj"+userobj);
-
-  
 })
+
+
+router.post('/login',(req,res)=> {
+  
+    var uname = req.body.username;
+    PlaintextPassword = req.body.passwd;
+    con.connect(function(){
+        let sql = "select * from users where username = ?"
+        con.query(sql,[uname], function(err, result){
+
+            if(err) throw err;
+            if(result) {
+               var  hash = result[0].passwd;
+               console.log('result hash passws'+hash);
+
+               bcrypt.compare(PlaintextPassword, hash, function(err, result) {
+                // res == true
+                if(result){
+                    var token = jwt.sign({ id: uname }, config.secret, {
+                        expiresIn: '1d' // expires in 30 days
+                      });
+                      console.log('token created'+token)
+                    //  var retval = {'message':'user is validated','token':token, 'auth':res}
+                      res.send({'token':token, 'auth': true});
+                }
+                console.log("pass res"+res)
+            });
+            }
+            else {
+                res.send({'message':'user not found'});
+            }
+            
+
+        })
+    })
+
+})
+
 
 router.patch('/',(req,res)=> {
 
