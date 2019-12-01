@@ -5,6 +5,8 @@ var bcrypt = require('bcrypt')
 var jwt = require('jsonwebtoken')
 var config = require('../config')
 
+
+
 router.post('/',(req,res)=> {
     userobj = {
          "name" : req.body.name,
@@ -43,13 +45,18 @@ router.post('/login',(req,res)=> {
   
     var uname = req.body.username;
     PlaintextPassword = req.body.passwd;
+    console.log("uname plantextpaswsswoerd"+uname,PlaintextPassword);
     con.connect(function(){
         let sql = "select * from users where username = ?"
         con.query(sql,[uname], function(err, result){
 
+            console.log("result len"+result.length);
+
             if(err) throw err;
-            if(result) {
-               var  hash = result[0].passwd;
+            if(result.length > 0) {
+               
+                var  hash = result[0].passwd;
+              
                console.log('result hash passws'+hash);
 
                bcrypt.compare(PlaintextPassword, hash, function(err, result) {
@@ -62,6 +69,10 @@ router.post('/login',(req,res)=> {
                     //  var retval = {'message':'user is validated','token':token, 'auth':res}
                       res.send({'token':token, 'auth': true});
                 }
+                else{
+                    res.send({'message':'user not validated'});
+                }
+
                 console.log("pass res"+res)
             });
             }
